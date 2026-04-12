@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Knowledge Companion — Architecture</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #222535;
+      --border: #2e3147;
+      --accent: #6c8ef7;
+      --accent2: #a78bfa;
+      --green: #34d399;
+      --orange: #fb923c;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+
+    header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 20px 40px; display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 100; }
+    .logo { width: 36px; height: 36px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+    header h1 { font-size: 18px; font-weight: 600; }
+    header span { font-size: 13px; color: var(--muted); margin-left: auto; background: var(--surface2); border: 1px solid var(--border); padding: 4px 12px; border-radius: 20px; }
+
+    .layout { display: flex; height: calc(100vh - 65px); }
+
+    nav { width: 230px; background: var(--surface); border-right: 1px solid var(--border); padding: 24px 0; flex-shrink: 0; overflow-y: auto; }
+    nav .section-label { font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); padding: 0 20px 8px; }
+    nav a { display: flex; align-items: center; gap: 10px; padding: 10px 20px; color: var(--muted); text-decoration: none; font-size: 13.5px; border-left: 3px solid transparent; transition: all 0.15s; }
+    nav a:hover { color: var(--text); background: var(--surface2); }
+    nav a.active { color: var(--accent); background: rgba(108,142,247,0.08); border-left-color: var(--accent); }
+    nav a .icon { font-size: 15px; }
+    nav hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+
+    main { flex: 1; overflow-y: auto; padding: 40px; }
+    .page { display: none; }
+    .page.active { display: block; }
+
+    .page-header { margin-bottom: 32px; }
+    .page-header h2 { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+    .page-header p { color: var(--muted); font-size: 14px; line-height: 1.6; max-width: 640px; }
+
+    .badge { display: inline-block; font-size: 11px; padding: 2px 10px; border-radius: 12px; font-weight: 600; margin-right: 6px; margin-bottom: 12px; }
+    .badge-blue  { background: rgba(108,142,247,0.15); color: var(--accent);  border: 1px solid rgba(108,142,247,0.3); }
+    .badge-green { background: rgba(52,211,153,0.12);  color: var(--green);   border: 1px solid rgba(52,211,153,0.3); }
+    .badge-orange{ background: rgba(251,146,60,0.12);  color: var(--orange);  border: 1px solid rgba(251,146,60,0.3); }
+    .badge-purple{ background: rgba(167,139,250,0.12); color: var(--accent2); border: 1px solid rgba(167,139,250,0.3); }
+
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 28px; margin-bottom: 28px; }
+    .card h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+    .card .desc { font-size: 13px; color: var(--muted); margin-bottom: 24px; line-height: 1.6; }
+
+    .mermaid { background: var(--surface2); border-radius: 8px; padding: 24px; overflow-x: auto; border: 1px solid var(--border); }
+
+    .component-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; margin-top: 20px; }
+    .component-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+    .component-item .comp-icon { font-size: 22px; margin-bottom: 8px; }
+    .component-item .comp-name { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+    .component-item .comp-tech { font-size: 11px; color: var(--accent); font-family: monospace; margin-bottom: 6px; }
+    .component-item .comp-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+    .stack-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .stack-table th { text-align: left; color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; padding: 0 16px 12px 0; border-bottom: 1px solid var(--border); }
+    .stack-table td { padding: 12px 16px 12px 0; border-bottom: 1px solid var(--border); vertical-align: top; }
+    .stack-table td:first-child { color: var(--muted); width: 160px; }
+    .stack-table td code { background: var(--surface2); color: var(--accent); padding: 2px 8px; border-radius: 4px; font-size: 12px; font-family: monospace; }
+
+    .privacy-banner { background: rgba(52,211,153,0.06); border: 1px solid rgba(52,211,153,0.2); border-radius: 10px; padding: 16px 20px; display: flex; align-items: center; gap: 12px; margin-bottom: 28px; font-size: 13px; color: var(--green); }
+    .privacy-banner .icon { font-size: 20px; }
+
+    .model-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+    .model-card .model-name { font-size: 15px; font-weight: 700; font-family: monospace; color: var(--accent); margin-bottom: 4px; }
+    .model-card .model-role { font-size: 12px; font-weight: 600; color: var(--orange); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; }
+    .model-card .model-tasks { list-style: none; }
+    .model-card .model-tasks li { font-size: 13px; color: var(--muted); padding: 4px 0; border-bottom: 1px solid var(--border); }
+    .model-card .model-tasks li:last-child { border-bottom: none; }
+    .model-card .model-tasks li::before { content: "→ "; color: var(--accent); }
+    .model-stat { display: inline-block; font-size: 11px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 2px 8px; margin-right: 6px; margin-top: 8px; color: var(--muted); }
+
+    .gate-row { display: flex; align-items: flex-start; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--border); }
+    .gate-row:last-child { border-bottom: none; }
+    .gate-num { width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: #0f1117; font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+    .gate-content h4 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+    .gate-content p { font-size: 13px; color: var(--muted); line-height: 1.5; }
+    .gate-content .gate-short { font-size: 11px; font-family: monospace; color: var(--green); background: rgba(52,211,153,0.08); border: 1px solid rgba(52,211,153,0.2); border-radius: 4px; padding: 2px 8px; display: inline-block; margin-top: 4px; }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🧠</div>
+  <h1>Knowledge Companion</h1>
+  <span>Mac Mini · Single User · Local Only</span>
+</header>
+
+<div class="layout">
+
+  <nav>
+    <div class="section-label">Overview</div>
+    <a href="#" onclick="showPage('goal',this)"><span class="icon">🎯</span> Goal</a>
+    <hr/>
+    <div class="section-label">Architecture</div>
+    <a href="#" class="active" onclick="showPage('hld',this)"><span class="icon">🏗️</span> High Level Design</a>
+    <a href="#" onclick="showPage('lld',this)"><span class="icon">⚙️</span> Low Level Design</a>
+    <hr/>
+    <div class="section-label">Models</div>
+    <a href="#" onclick="showPage('models',this)"><span class="icon">🤖</span> Ollama Strategy</a>
+    <hr/>
+    <div class="section-label">Intelligence</div>
+    <a href="#" onclick="showPage('compute',this)"><span class="icon">⚡</span> Compute Pipeline</a>
+    <a href="#" onclick="showPage('hallucination',this)"><span class="icon">🛡️</span> Anti-Hallucination</a>
+    <hr/>
+    <div class="section-label">Context</div>
+    <a href="#" onclick="showPage('sessions',this)"><span class="icon">💬</span> Session Management</a>
+    <hr/>
+    <div class="section-label">Flows</div>
+    <a href="#" onclick="showPage('dataflow',this)"><span class="icon">🔄</span> Data Flow</a>
+    <a href="#" onclick="showPage('userflow',this)"><span class="icon">👤</span> User Control Flow</a>
+  </nav>
+
+  <main>
+
+    <!-- ══════════════════════ GOAL ══════════════════════ -->
+    <div class="page" id="page-goal">
+      <div class="page-header">
+        <span class="badge badge-green">Purpose</span>
+        <h2>Goal</h2>
+        <p>Why this system exists, what problem it solves, and what it does.</p>
+      </div>
+
+      <div class="card">
+        <h3>The Problem</h3>
+        <p class="desc">An organisation has thousands of internal PDFs stored on SharePoint. Staff need answers from these documents quickly but face four hard blockers:</p>
+        <div class="component-grid">
+          <div class="component-item">
+            <div class="comp-icon">📂</div>
+            <div class="comp-name">Too many documents</div>
+            <div class="comp-desc">Thousands of PDFs — manually searching is impractical and time-consuming.</div>
+          </div>
+          <div class="component-item">
+            <div class="comp-icon">🖼️</div>
+            <div class="comp-name">Scanned images</div>
+            <div class="comp-desc">Many PDFs are scanned paper documents with no machine-readable text — standard search fails entirely.</div>
+          </div>
+          <div class="component-item">
+            <div class="comp-icon">🔒</div>
+            <div class="comp-name">Sensitive data</div>
+            <div class="comp-desc">Documents are confidential and cannot be sent to OpenAI, Anthropic, or any external cloud service.</div>
+          </div>
+          <div class="component-item">
+            <div class="comp-icon">🏢</div>
+            <div class="comp-name">On-premise only</div>
+            <div class="comp-desc">All processing must happen on the organisation's own hardware — a Mac Mini.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>What This System Does</h3>
+        <p class="desc">Knowledge Companion is a private, conversational interface over the entire document library — powered entirely by local Ollama models.</p>
+        <div class="component-grid">
+          <div class="component-item">
+            <div class="comp-icon">📥</div>
+            <div class="comp-name">Ingests documents</div>
+            <div class="comp-desc">Reads PDFs from a local folder. Extracts text from native PDFs and runs OCR on scanned images automatically.</div>
+          </div>
+          <div class="component-item">
+            <div class="comp-icon">🧠</div>
+            <div class="comp-name">Understands content</div>
+            <div class="comp-desc">Uses hierarchical chunking and local embeddings (nomic-embed-text) to enable meaning-based search, not keyword matching.</div>
+          </div>
+          <div class="component-item">
+            <div class="comp-icon">🤖</div>
+            <div class="comp-name">Routes intelligently</div>
+            <div class="comp-desc">llama3.2:3b classifies query complexity and routes to the right model — fast answers stay fast, complex reasoning gets the full 8b model.</div>
+          </div>
+          <div class="component-item">
+            <div class="comp-icon">💬</div>
+            <div class="comp-name">Answers questions</div>
+            <div class="comp-desc">User asks in plain English. System finds relevant chunks via hybrid search, re-ranks them, and generates a grounded answer.</div>
+          </div>
+          <div class="component-item">
+            <div class="comp-icon">📎</div>
+            <div class="comp-name">Cites sources</div>
+            <div class="comp-desc">Every answer includes source document, page number, and a confidence score so the user can verify directly.</div>
+          </div>
+          <div class="component-item">
+            <div class="comp-icon">🗂️</div>
+            <div class="comp-name">Multi-tab sessions</div>
+            <div class="comp-desc">ChatGPT-style UI with multiple simultaneous chat sessions. Context switches intelligently when changing tabs.</div>
+          </div>
+          <div class="component-item">
+            <div class="comp-icon">📁</div>
+            <div class="comp-name">Folder scoping</div>
+            <div class="comp-desc">Each chat session can be scoped to specific folders — query only HR docs, or only safety manuals, or everything.</div>
+          </div>
+          <div class="component-item">
+            <div class="comp-icon">🛡️</div>
+            <div class="comp-name">No hallucinations</div>
+            <div class="comp-desc">Score threshold, strict system prompt, temperature=0, multi-chunk agreement, and source citations layer together to prevent fabrication.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Success Looks Like</h3>
+        <p class="desc">The system is working correctly when:</p>
+        <table class="stack-table">
+          <thead><tr><th>Action</th><th>Expected Result</th></tr></thead>
+          <tbody>
+            <tr><td>Drop PDF and run ingest</td><td>Document becomes queryable within minutes</td></tr>
+            <tr><td>Ask a question in plain English</td><td>Accurate answer with source citation within seconds</td></tr>
+            <tr><td>Ask about a scanned document</td><td>Correct answer via OCR pipeline</td></tr>
+            <tr><td>Ask something not in any document</td><td>System says it could not find relevant information — no hallucination</td></tr>
+            <tr><td>Open a second chat tab</td><td>New independent session with its own context and folder scope</td></tr>
+            <tr><td>Switch between tabs</td><td>Context, history, and folder scope restore instantly and correctly</td></tr>
+            <tr><td>Disconnect from the internet</td><td>System continues to work identically</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h3>Scope — Current Phase</h3>
+        <table class="stack-table">
+          <thead><tr><th>Out of Scope Now</th><th>Reason</th></tr></thead>
+          <tbody>
+            <tr><td>Multiple concurrent users</td><td>Single user on Mac Mini — can revisit if needed</td></tr>
+            <tr><td>Automatic SharePoint sync</td><td>Manual PDF drop is sufficient to start</td></tr>
+            <tr><td>User authentication</td><td>Local machine, single user</td></tr>
+            <tr><td>Response caching</td><td>Discussed — pending boss approval before implementing</td></tr>
+            <tr><td>Cloud deployment</td><td>Hard requirement: on-premise only</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══════════════════════ HLD ══════════════════════ -->
+    <div class="page active" id="page-hld">
+      <div class="page-header">
+        <span class="badge badge-blue">Overview</span>
+        <h2>High Level Design</h2>
+        <p>Fully local RAG system. React frontend talks to a FastAPI backend. All intelligence runs through Ollama — three local models handle embeddings, routing, re-ranking, and generation.</p>
+      </div>
+
+      <div class="privacy-banner">
+        <span class="icon">🔒</span>
+        <div><strong>100% Private</strong> — React, FastAPI, Ollama, PostgreSQL+pgvector, and OCR all run on-device. Zero external API calls at runtime.</div>
+      </div>
+
+      <div class="card">
+        <h3>System Overview</h3>
+        <p class="desc">Two pipelines share PostgreSQL+pgvector as the central knowledge layer. Ingestion is a batch CLI. Query is real-time through FastAPI with streaming to the React UI.</p>
+        <div class="mermaid">
+graph TB
+    SP[SharePoint source]
+    DF[documents local folder]
+
+    subgraph MAC[Mac Mini 100 percent Local]
+        direction TB
+        subgraph ING[Ingestion Pipeline batch]
+            PD[PyMuPDF PDF Parser]
+            OCR[pytesseract OCR]
+            CHK[Hierarchical Chunker]
+            EMB[nomic-embed-text Ollama]
+        end
+
+        PG[(PostgreSQL + pgvector)]
+
+        subgraph QRY[Query Pipeline real-time]
+            HYDE[HyDE llama3.2:3b]
+            HYBRID[Hybrid Search BM25 plus Semantic plus Keyword]
+            RERANK[Re-ranker llama3.2:3b]
+            ROUTE[Router llama3.2:3b]
+            LLM3[llama3.2:3b fast]
+            LLM8[llama3.1:8b reasoner]
+        end
+
+        API[FastAPI Backend]
+        UI[React plus shadcn UI localhost:3000]
+    end
+
+    USR([User])
+
+    SP -->|manual sync| DF
+    DF --> PD
+    PD -->|text| CHK
+    PD -->|scanned| OCR
+    OCR --> CHK
+    CHK --> EMB
+    EMB --> PG
+
+    USR --> UI
+    UI --> API
+    API --> HYDE
+    HYDE --> HYBRID
+    HYBRID --> PG
+    PG --> HYBRID
+    HYBRID --> RERANK
+    RERANK --> ROUTE
+    ROUTE --> LLM3
+    ROUTE --> LLM8
+    LLM3 -->|stream| API
+    LLM8 -->|stream| API
+    API --> UI
+    API --> PG
+
+    style MAC fill:#1a1d27,stroke:#2e3147,color:#e2e8f0
+    style ING fill:#0f1117,stroke:#2e3147,color:#e2e8f0
+    style QRY fill:#0f1117,stroke:#2e3147,color:#e2e8f0
+    style PG fill:#222535,stroke:#6c8ef7,color:#6c8ef7
+    style USR fill:#34d399,stroke:#34d399,color:#0f1117
+    style UI fill:#222535,stroke:#a78bfa,color:#a78bfa
+    style API fill:#222535,stroke:#fb923c,color:#fb923c
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Technology Stack</h3>
+        <table class="stack-table">
+          <thead><tr><th>Layer</th><th>Technology</th><th>Reason</th></tr></thead>
+          <tbody>
+            <tr><td>LLM Runtime</td><td><code>Ollama</code></td><td>Apple Metal, REST API, simple model management — only runtime used</td></tr>
+            <tr><td>Fast worker model</td><td><code>llama3.2:3b</code></td><td>Routing, HyDE, re-ranking, topic-switch detection — handles 80% of tasks fast</td></tr>
+            <tr><td>Reasoner model</td><td><code>llama3.1:8b</code></td><td>Final answer generation for complex queries only</td></tr>
+            <tr><td>Embeddings</td><td><code>nomic-embed-text</code></td><td>Via Ollama, optimized for retrieval, fully local</td></tr>
+            <tr><td>Vector Store</td><td><code>pgvector (PostgreSQL extension)</code></td><td>Full HNSW index, SQL joins, single database for all data</td></tr>
+            <tr><td>Keyword Re-ordering</td><td><code>rank-bm25</code></td><td>Keyword re-ordering over semantic candidates</td></tr>
+            <tr><td>Exact Keyword Search</td><td><code>PostgreSQL ILIKE</code></td><td>Exact keyword search for acronyms and technical terms</td></tr>
+            <tr><td>PDF Parsing</td><td><code>PyMuPDF</code></td><td>Fastest, best text extraction, handles complex layouts</td></tr>
+            <tr><td>OCR</td><td><code>pytesseract</code></td><td>Offline, battle-tested, integrates cleanly with PyMuPDF</td></tr>
+            <tr><td>Backend API</td><td><code>FastAPI</code></td><td>Async, streaming support via SSE, bridges React and Python stack</td></tr>
+            <tr><td>Session Store</td><td><code>PostgreSQL</code></td><td>Same Postgres instance as vector store — sessions and chunks co-located</td></tr>
+            <tr><td>Frontend</td><td><code>React + shadcn/ui</code></td><td>ChatGPT-style UI, black and white, multi-tab session support</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══════════════════════ LLD ══════════════════════ -->
+    <div class="page" id="page-lld">
+      <div class="page-header">
+        <span class="badge badge-orange">Detail</span>
+        <h2>Low Level Design</h2>
+        <p>Component internals, decision points, and data transformations for both pipelines.</p>
+      </div>
+
+      <div class="card">
+        <h3>Ingestion Pipeline</h3>
+        <p class="desc">Batch CLI. Detects text vs scanned PDFs, applies OCR, builds hierarchical chunks, extracts metadata from text directly, embeds, and stores with deduplication.</p>
+        <div class="mermaid">
+graph TD
+    A[PDF File] --> B[Hash Check SHA256]
+    B --> C{Already ingested}
+    C -->|Yes| D[Skip - already processed]
+    C -->|No| E[PyMuPDF open document]
+    E --> F{Text found}
+    F -->|Text PDF| G[Clean and normalize text]
+    F -->|Scanned| H[pdf2image convert pages]
+    H --> I[Tesseract OCR per page]
+    I --> G
+    G --> J[Extract metadata from text - headings and doc type]
+    J --> K[Parent chunks 2000 chars]
+    K --> L[Child chunks 400 chars per parent]
+    L --> M[Embed children with nomic-embed-text]
+    M --> N[Store in PostgreSQL with parent ref and doc_id]
+    N --> O[Update ingestion log]
+    style D fill:#222535,stroke:#2e3147,color:#94a3b8
+    style J fill:#222535,stroke:#34d399,color:#34d399
+    style N fill:#222535,stroke:#6c8ef7,color:#6c8ef7
+    style M fill:#222535,stroke:#a78bfa,color:#a78bfa
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Query Pipeline</h3>
+        <p class="desc">Real-time. Every query passes through input validation, HyDE expansion, three-lane retrieval with RRF merge, Ollama re-ranking, model routing, and streaming generation.</p>
+        <div class="mermaid">
+graph TD
+    A[User Question] --> A1{Input Validation}
+    A1 -->|Gibberish or Injection| A2[Reject - invalid input]
+    A1 -->|Valid| B[FastAPI receives request]
+    B --> C[Load session history from PostgreSQL]
+    C --> D[llama3.2:3b generates HyDE answer - 70 percent HyDE + 30 percent original blend]
+    D --> E[Embed HyDE blend with nomic-embed-text]
+    E --> F[pgvector semantic search top 20]
+    F --> F2[BM25 re-order over semantic candidates]
+    E --> G[PostgreSQL ILIKE keyword search max 2 terms]
+    F2 --> H[Reciprocal Rank Fusion RRF merge all lanes]
+    G --> H
+    H --> I[llama3.2:3b re-ranks to top 5]
+    I --> I2{Keyword-boost check}
+    I2 -->|No keyword chunk in top 5| I3[Swap in best keyword chunk above threshold]
+    I2 -->|OK| J{Score above 0.45 threshold}
+    I3 --> J
+    J -->|No| K[Return no relevant docs found]
+    J -->|Yes| J2[Apply source diversity cap - max 2 chunks per doc]
+    J2 --> L[Retrieve parent chunks for context]
+    L --> M[llama3.2:3b classifies complexity]
+    M -->|Simple| N[llama3.2:3b generates answer - stream]
+    M -->|Complex| O[llama3.1:8b generates answer - stream]
+    N --> Q[Stream tokens via SSE to React]
+    O --> Q
+    I --> R[Build source citations - confidence from re-rank scores]
+    R --> Q
+    style A1 fill:#222535,stroke:#fb923c,color:#fb923c
+    style A2 fill:#222535,stroke:#fb923c,color:#fb923c
+    style D fill:#222535,stroke:#a78bfa,color:#a78bfa
+    style I fill:#222535,stroke:#a78bfa,color:#a78bfa
+    style M fill:#222535,stroke:#a78bfa,color:#a78bfa
+    style N fill:#222535,stroke:#a78bfa,color:#a78bfa
+    style O fill:#222535,stroke:#6c8ef7,color:#6c8ef7
+    style K fill:#222535,stroke:#fb923c,color:#fb923c
+    style Q fill:#222535,stroke:#34d399,color:#34d399
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>PostgreSQL chunks table</h3>
+        <p class="desc">Each child chunk stored with a reference to its parent for full-context retrieval. All data lives in a single PostgreSQL instance.</p>
+        <div class="component-grid">
+          <div class="component-item">
+            <div class="comp-icon">🔑</div>
+            <div class="comp-name">id</div>
+            <div class="comp-tech">string</div>
+            <div class="comp-desc">doc_hash + chunk_index — unique, enables deduplication</div>
+          </div>
+          <div class="component-item">
+            <div class="comp-icon">🆔</div>
+            <div class="comp-name">doc_id</div>
+            <div class="comp-tech">string</div>
+            <div class="comp-desc">SHA-256 hash of the source file — links all chunks from one document</div>
+          </div>
+          <div class="component-item">
+            <div class="comp-icon">📐</div>
+            <div class="comp-name">embedding</div>
+            <div class="comp-tech">vector(768)</div>
+            <div class="comp-desc">nomic-embed-text vector of child chunk — HNSW index for fast cosine search</div>
+          </div>
+          <div class="component-item">
+            <div class="comp-icon">📝</div>
+            <div class="comp-name">content</div>
+            <div class="comp-tech">text column</div>
+            <div class="comp-desc">Child chunk text (400 chars) — used for similarity search</div>
+          </div>
+          <div class="component-item">
+            <div class="comp-icon">📦</div>
+            <div class="comp-name">parent_text</div>
+            <div class="comp-tech">text column</div>
+            <div class="comp-desc">Parent chunk text (2000 chars) — sent to LLM for full context</div>
+          </div>
+          <div class="component-item">
+            <div class="comp-icon">📁</div>
+            <div class="comp-name">source</div>
+            <div class="comp-tech">text column</div>
+            <div class="comp-desc">Original filename for citation</div>
+          </div>
+          <div class="component-item">
+            <div class="comp-icon">📄</div>
+            <div class="comp-name">page</div>
+            <div class="comp-tech">integer column</div>
+            <div class="comp-desc">Page number within the document</div>
+          </div>
+          <div class="component-item">
+            <div class="comp-icon">🏷️</div>
+            <div class="comp-name">section</div>
+            <div class="comp-tech">text column</div>
+            <div class="comp-desc">Section heading extracted from text at ingestion</div>
+          </div>
+          <div class="component-item">
+            <div class="comp-icon">📂</div>
+            <div class="comp-name">folder</div>
+            <div class="comp-tech">text column</div>
+            <div class="comp-desc">Source folder path — enables per-session folder scoping</div>
+          </div>
+          <div class="component-item">
+            <div class="comp-icon">🔍</div>
+            <div class="comp-name">was_ocr</div>
+            <div class="comp-tech">boolean column</div>
+            <div class="comp-desc">Whether this chunk came from OCR extraction</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════ MODELS ══════════════════════ -->
+    <div class="page" id="page-models">
+      <div class="page-header">
+        <span class="badge badge-purple">Ollama Only</span>
+        <h2>Ollama Model Strategy</h2>
+        <p>Three models. One runtime. Zero external dependencies. Every intelligent task in the pipeline is handled by an Ollama model.</p>
+      </div>
+
+      <div class="card">
+        <h3>Model Lineup</h3>
+        <p class="desc">Pull once, use forever. All models run on Apple Metal via Ollama.</p>
+        <div class="model-card">
+          <div class="model-name">nomic-embed-text</div>
+          <div class="model-role">Embedder — always loaded</div>
+          <ul class="model-tasks">
+            <li>Convert document chunks to 768-dim vectors at ingestion</li>
+            <li>Convert user queries and HyDE hypothetical answers to vectors</li>
+            <li>Powers pgvector HNSW similarity search</li>
+          </ul>
+          <span class="model-stat">~300 MB</span>
+          <span class="model-stat">always warm</span>
+          <span class="model-stat">768-dim output</span>
+        </div>
+
+        <div class="model-card">
+          <div class="model-name">llama3.2:3b</div>
+          <div class="model-role">Fast Worker — handles 80% of tasks</div>
+          <ul class="model-tasks">
+            <li>HyDE: generate a hypothetical document excerpt to improve retrieval (70% HyDE + 30% original blend)</li>
+            <li>Re-ranker: score each retrieved chunk for relevance, keep top 5</li>
+            <li>Router: classify query as SIMPLE or COMPLEX to pick the right answer model</li>
+            <li>Conflict detector: check if top 2 retrieved chunks contradict each other</li>
+            <li>Topic-switch detector: classify follow-up vs new topic for history trimming</li>
+            <li>Answer generator: handles all SIMPLE queries end-to-end</li>
+          </ul>
+          <span class="model-stat">~2 GB</span>
+          <span class="model-stat">~200-500ms per task</span>
+          <span class="model-stat">temperature=0</span>
+        </div>
+
+        <div class="model-card">
+          <div class="model-name">llama3.1:8b</div>
+          <div class="model-role">Reasoner — called only for complex queries</div>
+          <ul class="model-tasks">
+            <li>Multi-document comparison and synthesis</li>
+            <li>Complex reasoning across long context windows</li>
+            <li>Queries requiring step-by-step chain of thought</li>
+          </ul>
+          <span class="model-stat">~5 GB</span>
+          <span class="model-stat">~5-8s response</span>
+          <span class="model-stat">temperature=0</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Memory Footprint on Mac Mini</h3>
+        <table class="stack-table">
+          <thead><tr><th>Model</th><th>RAM</th><th>When loaded</th></tr></thead>
+          <tbody>
+            <tr><td><code>nomic-embed-text</code></td><td>~300 MB</td><td>Always — every query needs embeddings</td></tr>
+            <tr><td><code>llama3.2:3b</code></td><td>~2 GB</td><td>Always warm — handles most tasks</td></tr>
+            <tr><td><code>llama3.1:8b</code></td><td>~5 GB</td><td>Loaded on first complex query, kept warm</td></tr>
+            <tr><td>Total peak</td><td>~7.3 GB</td><td>Well within 16GB unified memory</td></tr>
+            <tr><td>Remaining for OS</td><td>~8.7 GB</td><td>Comfortable headroom</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h3>Setup Commands</h3>
+        <p class="desc">One-time download. After this, all inference is offline.</p>
+        <div class="mermaid">
+graph LR
+    A[Install Ollama] --> B[ollama pull nomic-embed-text]
+    B --> C[ollama pull llama3.2:3b]
+    C --> D[ollama pull llama3.1:8b]
+    D --> E[All models ready]
+    style E fill:#222535,stroke:#34d399,color:#34d399
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════ COMPUTE ══════════════════════ -->
+    <div class="page" id="page-compute">
+      <div class="page-header">
+        <span class="badge badge-orange">Performance</span>
+        <h2>Compute Pipeline</h2>
+        <p>Five gates filter each query before it reaches the LLM. Most queries never reach the expensive model — saving seconds of latency per response.</p>
+      </div>
+
+      <div class="card">
+        <h3>Compute Gates</h3>
+        <p class="desc">Each gate is a cheap check that can short-circuit the rest of the pipeline.</p>
+        <div class="gate-row">
+          <div class="gate-num">1</div>
+          <div class="gate-content">
+            <h4>Input Validation</h4>
+            <p>Gibberish detection (vowel-ratio check) rejects keyboard mash. Prompt injection blocking (pattern match) blocks "ignore previous instructions", "pretend to be", and similar attacks. Both checks run before any LLM call.</p>
+            <span class="gate-short">~0ms — pure Python, no LLM</span>
+          </div>
+        </div>
+        <div class="gate-row">
+          <div class="gate-num">2</div>
+          <div class="gate-content">
+            <h4>HyDE Expansion (llama3.2:3b)</h4>
+            <p>Generate a hypothetical document excerpt that would answer the question. Blend 70% HyDE + 30% original question as the search query — produces far better vector matches against real document chunks.</p>
+            <span class="gate-short">~200ms — llama3.2:3b</span>
+          </div>
+        </div>
+        <div class="gate-row">
+          <div class="gate-num">3</div>
+          <div class="gate-content">
+            <h4>Three-Lane Retrieval + Re-ranking (llama3.2:3b)</h4>
+            <p>Lane 1: pgvector semantic search top 20. Lane 2: BM25 re-order over semantic candidates. Lane 3: PostgreSQL ILIKE exact keyword search for up to 2 extracted acronyms/terms. Merge all lanes via Reciprocal Rank Fusion (RRF), then llama3.2:3b scores each chunk and keeps top 5. Keyword-boost guarantee: if no keyword-matched chunk lands in top 5, the best keyword chunk above threshold is swapped in. Source diversity cap: max 2 chunks per source document (keyword-boosted chunks exempt). If best score is below 0.45 threshold — stop here, return no-docs response. No LLM call needed.</p>
+            <span class="gate-short">miss: return fallback — no LLM call</span>
+          </div>
+        </div>
+        <div class="gate-row">
+          <div class="gate-num">4</div>
+          <div class="gate-content">
+            <h4>Model Routing (llama3.2:3b)</h4>
+            <p>Classify the query as SIMPLE (single fact, direct answer) or COMPLEX (comparison, multi-doc, reasoning). Route accordingly.</p>
+            <span class="gate-short">SIMPLE: llama3.2:3b — ~1-2s total</span>
+          </div>
+        </div>
+        <div class="gate-row">
+          <div class="gate-num">5</div>
+          <div class="gate-content">
+            <h4>Answer Generation (llama3.2:3b or llama3.1:8b)</h4>
+            <p>Generate answer with temperature=0, streaming enabled. Confidence score (HIGH ≥0.70, MEDIUM ≥0.45) is derived from retrieval re-rank scores before generation — no separate LLM call required, enabling true token streaming from the first token.</p>
+            <span class="gate-short">COMPLEX: llama3.1:8b — ~5-8s total</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Latency by Query Type</h3>
+        <table class="stack-table">
+          <thead><tr><th>Query Type</th><th>Example</th><th>Model Used</th><th>Latency</th></tr></thead>
+          <tbody>
+            <tr><td>Gibberish/injection</td><td>Keyboard mash or injection attempt</td><td>None</td><td>&lt; 5ms</td></tr>
+            <tr><td>No relevant docs</td><td>Out-of-scope question (score &lt; 0.45)</td><td>3b only (re-rank)</td><td>~400ms</td></tr>
+            <tr><td>Simple factual</td><td>What is the notice period?</td><td>3b end-to-end</td><td>~1-2s</td></tr>
+            <tr><td>Complex reasoning</td><td>Compare 2023 vs 2024 leave policy</td><td>3b prep + 8b answer</td><td>~6-10s</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══════════════════════ HALLUCINATION ══════════════════════ -->
+    <div class="page" id="page-hallucination">
+      <div class="page-header">
+        <span class="badge badge-green">Accuracy</span>
+        <h2>Anti-Hallucination</h2>
+        <p>Six independent layers. Each one alone reduces hallucinations — together they make fabrication extremely unlikely.</p>
+      </div>
+
+      <div class="card">
+        <h3>Layer 1 — Score Threshold Gate</h3>
+        <p class="desc">If no retrieved chunk scores above 0.45 similarity, the LLM is never called. The system returns a fixed fallback message. No generation means no hallucination.</p>
+        <div class="mermaid">
+graph LR
+    A[Query] --> B[Retrieve and Re-rank]
+    B --> C{Best score above 0.45}
+    C -->|No| D[Fallback: no relevant documents found]
+    C -->|Yes| E[Proceed to LLM]
+    style D fill:#222535,stroke:#fb923c,color:#fb923c
+    style E fill:#222535,stroke:#34d399,color:#34d399
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Layer 2 — Strict System Prompt</h3>
+        <p class="desc">The LLM is instructed to answer only from the provided context and to explicitly admit when it cannot find the answer.</p>
+        <div class="mermaid">
+graph TD
+    A[System Prompt sent with every request] --> B[Answer ONLY using the context below]
+    A --> C[If answer not in context say so explicitly]
+    A --> D[Do not use any outside knowledge]
+    A --> E[Think step by step before answering]
+    style A fill:#222535,stroke:#6c8ef7,color:#6c8ef7
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Layer 3 — Temperature Zero</h3>
+        <p class="desc">Both models run at temperature=0. This makes the model deterministic — it always picks the highest-probability token, eliminating creative deviation from the source material.</p>
+        <table class="stack-table">
+          <thead><tr><th>Setting</th><th>Effect</th></tr></thead>
+          <tbody>
+            <tr><td>temperature=0</td><td>Deterministic output — no randomness or creative generation</td></tr>
+            <tr><td>top_p=1</td><td>No nucleus sampling — sticks to most probable tokens</td></tr>
+            <tr><td>repeat_penalty=1.1</td><td>Discourages repetitive filler content</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h3>Layer 4 — Multi-Chunk Agreement</h3>
+        <p class="desc">llama3.2:3b checks if retrieved chunks agree before passing them to the answer model. Conflicts are surfaced to the user rather than silently resolved.</p>
+        <div class="mermaid">
+graph TD
+    A[Top 5 chunks retrieved] --> B[llama3.2:3b checks top 2 chunks for contradiction]
+    B --> C{Contradiction found}
+    C -->|No| D[Pass to answer model as context]
+    C -->|Yes| E[Flag conflict in response]
+    E --> F[LLM told to acknowledge both versions]
+    style C fill:#222535,stroke:#2e3147,color:#e2e8f0
+    style E fill:#222535,stroke:#fb923c,color:#fb923c
+    style D fill:#222535,stroke:#34d399,color:#34d399
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Layer 5 — Source Citations + Pre-Generation Confidence Score</h3>
+        <p class="desc">Every answer surfaces the source document and page number. The user can open the PDF and verify the exact passage. If the citation doesn't match — hallucination is caught immediately.</p>
+        <div class="component-grid">
+          <div class="component-item">
+            <div class="comp-icon">📄</div>
+            <div class="comp-name">Filename</div>
+            <div class="comp-desc">Exact PDF name shown under each answer</div>
+          </div>
+          <div class="component-item">
+            <div class="comp-icon">🔢</div>
+            <div class="comp-name">Page number</div>
+            <div class="comp-desc">Specific page within the document</div>
+          </div>
+          <div class="component-item">
+            <div class="comp-icon">📊</div>
+            <div class="comp-name">Confidence score</div>
+            <div class="comp-desc">HIGH ≥0.70 / MEDIUM ≥0.45 / LOW — derived from retrieval re-rank scores before generation, enabling true token streaming</div>
+          </div>
+          <div class="component-item">
+            <div class="comp-icon">🔗</div>
+            <div class="comp-name">Chunk count</div>
+            <div class="comp-desc">How many chunks agreed — 2+ agreement = higher confidence</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Layer 6 — Input Validation</h3>
+        <p class="desc">Two lightweight checks fire before any LLM work — stopping wasted compute and preventing prompt injection at the boundary.</p>
+        <div class="component-grid">
+          <div class="component-item">
+            <div class="comp-icon">🔤</div>
+            <div class="comp-name">Gibberish Detection</div>
+            <div class="comp-desc">Vowel-ratio check rejects keyboard mash (e.g., "asdfghjkl") before any LLM call — pure Python, ~0ms</div>
+          </div>
+          <div class="component-item">
+            <div class="comp-icon">🚫</div>
+            <div class="comp-name">Prompt Injection Blocking</div>
+            <div class="comp-desc">Pattern match blocks "ignore previous instructions", "pretend to be", and similar injection attempts before any LLM call</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════ SESSIONS ══════════════════════ -->
+    <div class="page" id="page-sessions">
+      <div class="page-header">
+        <span class="badge badge-blue">Context</span>
+        <h2>Session Management</h2>
+        <p>Multi-tab chat interface with intelligent context switching. Each tab is a fully isolated session with its own history, folder scope, and scroll state.</p>
+      </div>
+
+      <div class="card">
+        <h3>Multi-Tab Architecture</h3>
+        <p class="desc">Each open tab maintains completely isolated state. Switching tabs instantly restores the correct context — the backend loads the right session by ID on every request.</p>
+        <div class="mermaid">
+graph TD
+    A[React UI] --> B[Tab 1 - session uuid-1]
+    A --> C[Tab 2 - session uuid-2]
+    A --> D[Tab 3 - session uuid-3]
+    B --> E[Context: HR docs folder]
+    B --> F[History: 8 messages]
+    B --> G[Scroll position preserved]
+    C --> H[Context: Safety folder]
+    C --> I[History: 3 messages]
+    C --> J[Input draft preserved]
+    D --> K[Context: all folders]
+    D --> L[New session blank]
+    style B fill:#222535,stroke:#6c8ef7,color:#6c8ef7
+    style C fill:#222535,stroke:#a78bfa,color:#a78bfa
+    style D fill:#222535,stroke:#34d399,color:#34d399
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>How Context Switching Works</h3>
+        <p class="desc">Every API request carries the session_id. FastAPI loads the correct history from PostgreSQL. The LLM never sees context from a different tab.</p>
+        <div class="mermaid">
+graph LR
+    A[User switches to Tab 2] --> B[React loads Tab 2 state from local store]
+    B --> C[User sends message]
+    C --> D[POST to FastAPI with session_id of Tab 2]
+    D --> E[Load Tab 2 history from PostgreSQL]
+    E --> F[Build prompt with Tab 2 context only]
+    F --> G[Stream answer back]
+    G --> H[Tab 1 context untouched in memory]
+    style D fill:#222535,stroke:#fb923c,color:#fb923c
+    style H fill:#222535,stroke:#34d399,color:#34d399
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>PostgreSQL sessions schema</h3>
+        <table class="stack-table">
+          <thead><tr><th>Table</th><th>Columns</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>sessions</code></td><td>id, title, created_at, folders, is_active</td><td>One row per conversation</td></tr>
+            <tr><td><code>messages</code></td><td>id, session_id, role, content, sources, confidence, model_used, timestamp</td><td>Full message history</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h3>Context Window Management</h3>
+        <p class="desc">Sliding window of last 12 turns sent to the LLM. Adaptive topic-switch detection (llama3.2:3b) checks whether the new question is a follow-up or a new topic — on topic switch, history trims to 4 turns to avoid polluting the new context. Older turns stay in PostgreSQL for history display only.</p>
+        <table class="stack-table">
+          <thead><tr><th>What Goes to LLM</th><th>What Stays in PostgreSQL Only</th></tr></thead>
+          <tbody>
+            <tr><td>Last 12 turns (sliding window, normal)</td><td>Full conversation history</td></tr>
+            <tr><td>Last 4 turns (on topic switch)</td><td>All turns beyond the window</td></tr>
+            <tr><td>Current question</td><td>Session metadata</td></tr>
+            <tr><td>Top 5 retrieved chunks</td><td>Source citations archive</td></tr>
+            <tr><td>System prompt</td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h3>User Controls</h3>
+        <div class="component-grid">
+          <div class="component-item">
+            <div class="comp-icon">➕</div>
+            <div class="comp-name">New Chat</div>
+            <div class="comp-desc">Opens a new tab with a blank session. Existing tabs stay open and unaffected.</div>
+          </div>
+          <div class="component-item">
+            <div class="comp-icon">🗑️</div>
+            <div class="comp-name">Clear This Chat</div>
+            <div class="comp-desc">Deletes all messages in the current session. Session entry stays in sidebar.</div>
+          </div>
+          <div class="component-item">
+            <div class="comp-icon">❌</div>
+            <div class="comp-name">Close Tab</div>
+            <div class="comp-desc">Removes from tab bar. Session persists in sidebar history — can be reopened.</div>
+          </div>
+          <div class="component-item">
+            <div class="comp-icon">🔄</div>
+            <div class="comp-name">Switch Tab</div>
+            <div class="comp-desc">Instantly restores full context — history, folder scope, scroll position, input draft.</div>
+          </div>
+          <div class="component-item">
+            <div class="comp-icon">📁</div>
+            <div class="comp-name">Change Folders</div>
+            <div class="comp-desc">Mid-session folder change prompts user to start a new chat to avoid mixed context.</div>
+          </div>
+          <div class="component-item">
+            <div class="comp-icon">🗂️</div>
+            <div class="comp-name">Delete Past Chat</div>
+            <div class="comp-desc">Hover on sidebar item to reveal delete icon. Permanently removes from PostgreSQL.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════ DATA FLOW ══════════════════════ -->
+    <div class="page" id="page-dataflow">
+      <div class="page-header">
+        <span class="badge badge-purple">Flow</span>
+        <h2>Data Flow</h2>
+        <p>Sequence diagrams showing exactly how data moves between components during ingestion and query.</p>
+      </div>
+
+      <div class="card">
+        <h3>Document Ingestion Flow</h3>
+        <p class="desc">Batch CLI. Idempotent — safe to re-run on the same folder. Only new files are processed.</p>
+        <div class="mermaid">
+sequenceDiagram
+    actor User
+    participant FS as File System
+    participant IP as Ingestion Script
+    participant MU as PyMuPDF
+    participant OCR as pytesseract
+    participant OE as nomic-embed-text
+    participant DB as PostgreSQL
+
+    User->>IP: python ingest.py
+    IP->>FS: Scan documents folder
+    FS-->>IP: List of PDF files
+
+    loop For each PDF
+        IP->>IP: Compute SHA-256 hash (doc_id)
+        IP->>DB: Check if hash exists
+        DB-->>IP: exists true or false
+
+        alt Not yet ingested
+            IP->>MU: Open PDF
+            MU-->>IP: Text and metadata
+
+            alt Text PDF
+                IP->>IP: Clean and normalize
+            else Scanned PDF
+                IP->>OCR: Convert to images
+                OCR-->>IP: OCR text per page (was_ocr=true)
+            end
+
+            IP->>IP: Extract metadata from text - headings and doc type
+            IP->>IP: Split into parent chunks 2000 chars
+            IP->>IP: Split parents into child chunks 400 chars
+
+            IP->>OE: Embed all child chunks batch
+            OE-->>IP: 768-dim vectors
+
+            IP->>DB: Store children with parent ref, doc_id and metadata
+            DB-->>IP: Confirmed
+
+        else Already ingested
+            IP->>IP: Skip
+        end
+    end
+
+    IP-->>User: Done - N docs M chunks ingested
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Query and Answer Flow</h3>
+        <p class="desc">Real-time. Six stages from question to streamed answer. Most queries resolve within 1-2 seconds via the fast path.</p>
+        <div class="mermaid">
+sequenceDiagram
+    actor User
+    participant UI as React UI
+    participant API as FastAPI
+    participant PG as PostgreSQL
+    participant LW as llama3.2:3b
+    participant OE as nomic-embed-text
+    participant LB as llama3.1:8b
+
+    User->>UI: Types question and submits
+    UI->>API: POST /chat with session_id and folders
+    API->>API: Input validation - gibberish and injection check
+    API->>PG: Load last 12 turns for session
+    PG-->>API: Conversation history
+    API->>LW: Topic-switch detection - follow-up or new topic
+    LW-->>API: Keep 12 turns or trim to 4
+
+    API->>LW: Generate HyDE hypothetical answer
+    LW-->>API: Hypothetical document excerpt
+
+    API->>OE: Embed 70 percent HyDE + 30 percent original blend
+    OE-->>API: Query vector
+
+    API->>PG: Semantic search top 20 chunks (pgvector)
+    PG-->>API: Chunks with scores
+    API->>API: BM25 re-order over semantic candidates
+    API->>PG: ILIKE keyword search for up to 2 extracted terms
+    PG-->>API: Keyword matched chunks
+    API->>API: Reciprocal Rank Fusion merge all three lanes
+
+    API->>LW: Re-rank merged chunks score 1-10 each
+    LW-->>API: Ranked top 5 chunks
+    API->>API: Keyword-boost guarantee and source diversity cap
+
+    alt Best score below 0.45 threshold
+        API-->>UI: No relevant documents found
+        UI-->>User: Fallback message
+    else Score above threshold
+        API->>API: Derive confidence score from re-rank scores
+        API->>API: Fetch parent chunks for each child
+        API->>LW: Classify SIMPLE or COMPLEX
+        LW-->>API: Routing decision
+
+        alt SIMPLE query
+            API->>LW: Generate answer stream
+            LW-->>API: Token stream
+        else COMPLEX query
+            API->>LB: Generate answer stream
+            LB-->>API: Token stream
+        end
+
+        loop Streaming tokens
+            API-->>UI: SSE token event
+            UI-->>User: Append to chat bubble
+        end
+
+        API->>PG: Save message and sources
+        API-->>UI: Citations and confidence score
+        UI-->>User: Show sources under answer
+    end
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════ USER FLOW ══════════════════════ -->
+    <div class="page" id="page-userflow">
+      <div class="page-header">
+        <span class="badge badge-green">UX</span>
+        <h2>User Control Flow</h2>
+        <p>End-to-end journey from first-time setup through daily use — React UI, multi-tab sessions, and document management.</p>
+      </div>
+
+      <div class="card">
+        <h3>First-Time Setup</h3>
+        <p class="desc">One-time only. Installs models and builds the initial index.</p>
+        <div class="mermaid">
+graph TD
+    START[Start] --> A[Install Ollama from ollama.com]
+    A --> B[ollama pull nomic-embed-text]
+    B --> C[ollama pull llama3.2:3b]
+    C --> D[ollama pull llama3.1:8b]
+    D --> E[Install Python 3.11 and Node 18]
+    E --> F[pip install -r requirements.txt]
+    F --> G[npm install in frontend folder]
+    G --> H[brew install tesseract]
+    H --> I[Copy PDFs into documents folder]
+    I --> J[python ingest.py]
+    J --> K{Ingestion ok}
+    K -->|Error| L[Check ingestion log and retry]
+    L --> J
+    K -->|Success| M[uvicorn main:app in backend]
+    M --> N[npm run dev in frontend]
+    N --> O[Open localhost:3000]
+    style START fill:#34d399,stroke:#34d399,color:#0f1117
+    style O fill:#34d399,stroke:#34d399,color:#0f1117
+    style L fill:#222535,stroke:#fb923c,color:#fb923c
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Daily Use Flow</h3>
+        <p class="desc">Normal daily interaction including multi-tab usage and document updates.</p>
+        <div class="mermaid">
+graph TD
+    START[Open localhost:3000] --> A[Select folder scope in sidebar]
+    A --> B[Type question in chat input]
+    B --> C{Relevant docs found}
+    C -->|No| D[See no relevant docs message]
+    D --> E[Refine question or change folder scope]
+    E --> B
+    C -->|Yes| F[Read streamed answer]
+    F --> G[Check source citations]
+    G --> H{Answer ok}
+    H -->|No - need more| I[Click source to view doc reference]
+    I --> J[Ask follow-up in same tab]
+    J --> B
+    H -->|Yes| K{Need another topic}
+    K -->|Yes - keep current open| L[Click plus New Chat]
+    L --> M[New tab opens blank session]
+    M --> A
+    K -->|Switch back| N[Click existing tab]
+    N --> O[Context restores instantly]
+    O --> B
+    K -->|Done| P[Close tab or end session]
+    style START fill:#6c8ef7,stroke:#6c8ef7,color:#0f1117
+    style L fill:#222535,stroke:#34d399,color:#34d399
+    style O fill:#222535,stroke:#34d399,color:#34d399
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Document Management Flow</h3>
+        <p class="desc">How to add, update, or remove documents from the knowledge base.</p>
+        <div class="mermaid">
+graph LR
+    A[New PDF from SharePoint] --> B{What action}
+    B -->|Add| C[Copy to documents folder]
+    C --> D[python ingest.py]
+    D --> E[New file processed existing skipped]
+    B -->|Update existing| F[Replace file in documents folder]
+    F --> G[python ingest.py --force filename]
+    G --> H[Old chunks removed new chunks stored]
+    B -->|Remove| I[python ingest.py --remove filename]
+    I --> J[Chunks deleted from PostgreSQL]
+    style E fill:#222535,stroke:#34d399,color:#34d399
+    style H fill:#222535,stroke:#fb923c,color:#fb923c
+    style J fill:#222535,stroke:#fb923c,color:#fb923c
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  const THEME = {
+    primaryColor: '#222535', primaryTextColor: '#e2e8f0', primaryBorderColor: '#2e3147',
+    lineColor: '#6c8ef7', secondaryColor: '#1a1d27', tertiaryColor: '#0f1117',
+    background: '#0f1117', mainBkg: '#222535', nodeBorder: '#2e3147',
+    clusterBkg: '#1a1d27', titleColor: '#e2e8f0', edgeLabelBackground: '#1a1d27',
+    actorBkg: '#222535', actorBorder: '#6c8ef7', actorTextColor: '#e2e8f0',
+    actorLineColor: '#6c8ef7', signalColor: '#a78bfa', signalTextColor: '#e2e8f0',
+    labelBoxBkgColor: '#1a1d27', labelBoxBorderColor: '#2e3147', labelTextColor: '#e2e8f0',
+    loopTextColor: '#e2e8f0', noteBorderColor: '#fb923c', noteBkgColor: '#222535',
+    noteTextColor: '#e2e8f0', activationBorderColor: '#6c8ef7', activationBkgColor: '#222535',
+    sequenceNumberColor: '#0f1117',
+  };
+
+  mermaid.initialize({
+    startOnLoad: false, theme: 'dark', securityLevel: 'loose',
+    themeVariables: THEME,
+    flowchart: { curve: 'basis', padding: 20 },
+    sequence: { actorMargin: 60, messageMargin: 35, mirrorActors: false },
+  });
+
+  async function renderDiagrams() {
+    const els = document.querySelectorAll('.mermaid');
+    for (let i = 0; i < els.length; i++) {
+      const el = els[i];
+      const code = el.textContent.trim();
+      const id = 'mg-' + i;
+      try {
+        const { svg } = await mermaid.render(id, code);
+        el.innerHTML = svg;
+      } catch (err) {
+        el.innerHTML = '<pre style="color:#fb923c;font-size:12px;padding:12px;white-space:pre-wrap">' +
+          'Error: ' + (err.message || String(err)) + '</pre>';
+      }
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', renderDiagrams);
+
+  function showPage(pageId, linkEl) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+    document.getElementById('page-' + pageId).classList.add('active');
+    linkEl.classList.add('active');
+    return false;
+  }
+</script>
+</body>
+</html>

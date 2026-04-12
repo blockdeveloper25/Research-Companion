@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Frontend build
+frontend/dist/
+
+# Logs & runtime state
+logs/
+*.log
+.pids/
+
+# Ingestion state (machine-specific paths)
+backend/ingestion_log.json
+
+# OCR cache (rebuildable, can be huge)
+backend/ocr_cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE / tools
+.vscode/
+.idea/
+.claude/
+CLAUDE.md
+
+# Documents (user data, not source code)
+documents/
+
+# Env files
+.env
+.env.*
+
+# Local-only notes
+project_knowledge_companion.md
+LEARNINGS.md
