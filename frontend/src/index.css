@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: #ffffff;
+  color: #111111;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Thin, light scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cccccc;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #aaaaaa;
+}
+
+/* Blinking cursor shown at the end of a streaming message */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+.streaming-cursor::after {
+  content: '▋';
+  margin-left: 1px;
+  animation: blink 1s step-start infinite;
+  color: #aaa;
+}
