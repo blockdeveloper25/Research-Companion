@@ -21,7 +21,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VENV="$ROOT/backend/.venv"
 
 echo ""
-echo -e "${BOLD}  Knowledge Companion — Update${NC}"
+echo -e "${BOLD}  Research Companion — Update${NC}"
 echo "  ────────────────────────────"
 
 # ── 1. Stop the running app ──────────────────────────────────────────────────
