@@ -204,15 +204,29 @@ def init_db() -> None:
                     chunk_id        TEXT        NOT NULL,
                     page            INTEGER     NOT NULL,
                     description     TEXT        NOT NULL DEFAULT '',
+                    confidence      REAL        NOT NULL DEFAULT 0.7,
+                    section         TEXT        NOT NULL DEFAULT '',
                     properties      JSONB       NOT NULL DEFAULT '{}',
                     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
                 );
+            """)
+
+            # Add columns if they don't exist (for backwards compatibility)
+            cur.execute("""
+                ALTER TABLE entities
+                ADD COLUMN IF NOT EXISTS confidence REAL NOT NULL DEFAULT 0.7;
+            """)
+            cur.execute("""
+                ALTER TABLE entities
+                ADD COLUMN IF NOT EXISTS section TEXT NOT NULL DEFAULT '';
             """)
 
             cur.execute("CREATE INDEX IF NOT EXISTS idx_entities_name_normalized ON entities(name_normalized);")
             cur.execute("CREATE INDEX IF NOT EXISTS idx_entities_type ON entities(entity_type);")
             cur.execute("CREATE INDEX IF NOT EXISTS idx_entities_doc_id ON entities(doc_id);")
             cur.execute("CREATE INDEX IF NOT EXISTS idx_entities_folder ON entities(folder);")
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_entities_confidence ON entities(confidence);")
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_entities_section ON entities(section);")
 
             # ── Knowledge Graph: Relationships ───────────────────────────────
             # Each row is a directed edge: entity A --[relation]--> entity B

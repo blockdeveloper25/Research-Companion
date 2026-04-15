@@ -74,25 +74,67 @@ GRAPH_EXTRACTION_ENABLED = True   # kill switch — set False to skip entirely
 # Fixed vocabulary forces the 3b model to categorize consistently.
 # These types are optimized for research papers, not policy documents.
 GRAPH_ENTITY_TYPES = [
-    # Research core concepts
-    "RESEARCH_QUESTION", "HYPOTHESIS", "METHODOLOGY", "DATASET", "FINDING",
-    # Research elements
-    "ALGORITHM", "STATISTICAL_MEASURE", "CONCLUSION", "LIMITATION", "ASSUMPTION",
-    # Metadata & context
-    "AUTHOR", "PUBLICATION_INFO", "RESEARCH_DOMAIN",
+    # Core research concepts
+    "RESEARCH_QUESTION",      # Central question being investigated
+    "HYPOTHESIS",             # Proposed answer or theoretical prediction
+    "FINDING",                # Key result or discovery
+    "CONCLUSION",             # Final interpretation of findings
+    
+    # Methodology & data
+    "METHODOLOGY",            # Experimental or analytical method
+    "DATASET",                # Data source or collection
+    "ALGORITHM",              # Computational or analytical algorithm
+    "STATISTICAL_MEASURE",    # Specific statistical result (p-value, correlation, etc.)
+    
+    # Research structure
+    "LIMITATION",             # Known constraints or weaknesses
+    "ASSUMPTION",             # Underlying assumptions made
+    "KEY_FINDING",            # Highlighted significant result
+    "RESEARCH_DOMAIN",        # Field of study (e.g., neuroscience, ML)
+    
+    # People & institutions
+    "AUTHOR",                 # Researcher/author name
+    "AFFILIATION",            # Institution or organization
+    "FUNDING_BODY",           # Funding source or grant program
+    
+    # References & citations
+    "CITATION",               # Referenced work or study
+    "PUBLICATION_INFO",       # Journal, conference, or publication metadata
+    
     # Fallback
     "OTHER",
 ]
 
 GRAPH_RELATION_TYPES = [
-    # Research logic
-    "ADDRESSES", "VALIDATES", "CONTRADICTS", "SUPPORTS", "DEMONSTRATES",
-    # Knowledge building
-    "BUILDS_ON", "EXTENDS", "CITES", "PROPOSES",
+    # Research logic & validation
+    "ADDRESSES",              # Hypothesis addresses research question
+    "VALIDATES",              # Finding validates hypothesis
+    "CONTRADICTS",            # Finding contradicts prior work
+    "SUPPORTS",               # Finding supports conclusion
+    "CONTRADICTS_FINDING",    # Two findings are contradictory
+    "DEMONSTRATES",           # Result demonstrates principle
+    
+    # Knowledge building & citations
+    "BUILDS_ON",              # Extends prior research
+    "REPLICATES_STUDY",       # Replicates or validates prior study
+    "DISPUTES",               # Disputes or challenges prior finding
+    "CITES",                  # References or cites work
+    "EXTENDS",                # Extends methodology or theory
+    "PROPOSES",               # Proposes new approach/method
+    
     # Method & data
-    "USES_METHODOLOGY", "USES_DATASET", "MEASURES",
-    # Comparison
-    "COMPARES_TO", "RELATED_TO",
+    "USES_METHODOLOGY",       # Applies specific method
+    "USES_DATASET",           # Analysis uses this data
+    "MEASURES",               # Statistical measure quantifies finding
+    "COMPARES_TO",            # Comparison with other studies/methods
+    
+    # Attribution
+    "AUTHORED_BY",            # Paper authored by person
+    "AFFILIATED_WITH",        # Author affiliated with institution
+    "FUNDED_BY",              # Research funded by organization
+    
+    # General
+    "RELATED_TO",             # General relationship
 ]
 
 GRAPH_MAX_ENTITIES_PER_CHUNK  = 10   # cap per parent chunk
